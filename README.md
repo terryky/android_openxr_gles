@@ -9,3 +9,7 @@ VR sample applications on Android NDK using OpenXR + OpenGLES. (especially  for 
 [<img src="gl2triOXR/gl2triOXR.png" width=500>](https://github.com/terryky/android_openxr_gles/tree/master/gl2triOXR)
 
 
+### [gl2gridOXR](https://github.com/terryky/android_openxr_gles/tree/master/gl2gridOXR)
+- display the grid mesh.<br>
+[<img src="gl2gridOXR/gl2gridOXR.png" width=500>](https://github.com/terryky/android_openxr_gles/tree/master/gl2gridOXR)
+
