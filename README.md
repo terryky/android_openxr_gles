@@ -6,14 +6,17 @@ VR sample applications on Android NDK using OpenXR + OpenGLES. (especially  for 
 
 ### [gl2gridOXR](https://github.com/terryky/android_openxr_gles/tree/master/gl2gridOXR)
 - display the grid mesh.<br>
-[<img src="gl2gridOXR/gl2gridOXR.png" width=500>](https://github.com/terryky/android_openxr_gles/tree/master/gl2gridOXR)
+[<img src="gl2gridOXR/gl2gridOXR.png" width=600>](https://github.com/terryky/android_openxr_gles/tree/master/gl2gridOXR)
 
 ### [gl2triOXR](https://github.com/terryky/android_openxr_gles/tree/master/gl2triOXR)
 - Just a triangle without parallax.<br>
-[<img src="gl2triOXR/gl2triOXR.png" width=500>](https://github.com/terryky/android_openxr_gles/tree/master/gl2triOXR)
+[<img src="gl2triOXR/gl2triOXR.png" width=600>](https://github.com/terryky/android_openxr_gles/tree/master/gl2triOXR)
 
 ### [gl2tri3dOXR](https://github.com/terryky/android_openxr_gles/tree/master/gl2tri3dOXR)
 - Just a triangle in 3D space with parallax.<br>
-[<img src="gl2tri3dOXR/gl2tri3dOXR.png" width=500>](https://github.com/terryky/android_openxr_gles/tree/master/gl2tri3dOXR)
+[<img src="gl2tri3dOXR/gl2tri3dOXR.png" width=600>](https://github.com/terryky/android_openxr_gles/tree/master/gl2tri3dOXR)
 
+### [gl2teapot](https://github.com/terryky/android_openxr_gles/tree/master/gl2teapotOXR)
+- draw a teapot 3D model.<br>
+[<img src="gl2teapotOXR/gl2teapotOXR.png" width=600>](https://github.com/terryky/android_openxr_gles/tree/master/gl2teapotOXR)
 
