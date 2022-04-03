@@ -18,16 +18,18 @@
 #include <openxr/openxr_reflection.h>
 #include <vector>
 
+#include <GLES3/gl31.h>
 #include "util_log.h"
+#include "util_render_target.h"
 
 
-typedef struct swapchain_obj_t
+typedef struct viewsurface_t
 {
-    XrSwapchain handle;
     uint32_t    width;
     uint32_t    height;
-    XrSwapchainImageOpenGLESKHR *img_array;
-} swapchain_obj_t;
+    XrSwapchain swapchain;
+    std::vector<render_target_t> rtarget_array;
+} viewsurface_t;
 
 
 
@@ -45,15 +47,14 @@ int         oxr_confirm_gfx_requirements (XrInstance instance, XrSystemId system
 
 
 /* View operation */
-XrViewConfigurationView *
-            oxr_enumerate_viewconfig (XrInstance instance, XrSystemId sysid, uint32_t *numview);
 int         oxr_locate_views (XrSession session, XrTime dpy_time, XrSpace space, uint32_t *view_cnt, XrView *view_array);
 
 
 /* Swapchain operation */
-int         oxr_create_swapchain        (swapchain_obj_t *scobj, XrSession session, uint32_t width, uint32_t height);
-int         oxr_acquire_swapchain_image (swapchain_obj_t *scobj, XrSwapchainImageOpenGLESKHR *glesImg, XrSwapchainSubImage *subImg);
-void        oxr_release_swapchain_image (swapchain_obj_t *scobj);
+std::vector<viewsurface_t>
+            oxr_create_viewsurface (XrInstance instance, XrSystemId sysid, XrSession session);
+int         oxr_acquire_viewsurface (viewsurface_t &viewSurface, render_target_t &rtarget, XrSwapchainSubImage &subImg);
+int         oxr_release_viewsurface (viewsurface_t &viewSurface);
 
 
 /* Frame operation */

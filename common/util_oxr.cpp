@@ -150,7 +150,7 @@ oxr_confirm_gfx_requirements (XrInstance instance, XrSystemId sysid)
 /* ---------------------------------------------------------------------------- *
  *  View operation
  * ---------------------------------------------------------------------------- */
-XrViewConfigurationView *
+static XrViewConfigurationView *
 oxr_enumerate_viewconfig (XrInstance instance, XrSystemId sysid, uint32_t *numview)
 {
     uint32_t                numConf;
@@ -206,8 +206,21 @@ oxr_locate_views (XrSession session, XrTime dpy_time, XrSpace space, uint32_t *v
 
 /* ---------------------------------------------------------------------------- *
  *  Swapchain operation
+ * ---------------------------------------------------------------------------- *
+ *
+ *  --+-- view[0] -- viewSurface[0]
+ *    |
+ *    +-- view[1] -- viewSurface[1]
+ *                   +----------------------------------------------+
+ *                   | uint32_t    width, height                    |
+ *                   | XrSwapchain swapchain                        |
+ *                   | rtarget_array[0]: (fbo_id, texc_id, texz_id) |
+ *                   | rtarget_array[1]: (fbo_id, texc_id, texz_id) |
+ *                   | rtarget_array[2]: (fbo_id, texc_id, texz_id) |
+ *                   +----------------------------------------------+
+ *
  * ---------------------------------------------------------------------------- */
-XrSwapchain
+static XrSwapchain
 oxr_create_swapchain (XrSession session, uint32_t width, uint32_t height)
 {
     XrSwapchainCreateInfo ci = {XR_TYPE_SWAPCHAIN_CREATE_INFO};
@@ -227,12 +240,12 @@ oxr_create_swapchain (XrSession session, uint32_t width, uint32_t height)
 }
 
 
-XrSwapchainImageOpenGLESKHR *
-oxr_alloc_swapchain_imgs (XrSwapchain swapchain)
+static int
+oxr_alloc_swapchain_rtargets (XrSwapchain swapchain, uint32_t width, uint32_t height,
+                              std::vector<render_target_t> &rtarget_array)
 {
     uint32_t imgCnt;
     xrEnumerateSwapchainImages (swapchain, 0, &imgCnt, NULL);
-    LOGI ("SwapchainImage num: %d", imgCnt);
 
     XrSwapchainImageOpenGLESKHR *img_gles = (XrSwapchainImageOpenGLESKHR *)calloc(sizeof(XrSwapchainImageOpenGLESKHR), imgCnt);
     for (uint32_t i = 0; i < imgCnt; i ++)
@@ -240,22 +253,48 @@ oxr_alloc_swapchain_imgs (XrSwapchain swapchain)
 
     xrEnumerateSwapchainImages (swapchain, imgCnt, &imgCnt, (XrSwapchainImageBaseHeader *)img_gles);
 
-    return img_gles;
-}
+    for (uint32_t i = 0; i < imgCnt; i ++)
+    {
+        GLuint tex_c = img_gles[i].image;
+        GLuint tex_z = 0;
+        GLuint fbo   = 0;
 
+        /* Depth Buffer */
+        glGenRenderbuffers (1, &tex_z);
+        glBindRenderbuffer (GL_RENDERBUFFER, tex_z);
+        glRenderbufferStorage (GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
 
-int
-oxr_create_swapchain (swapchain_obj_t *scobj, XrSession session, uint32_t width, uint32_t height)
-{
-    scobj->width     = width;
-    scobj->height    = height;
-    scobj->handle    = oxr_create_swapchain (session, width, height);
-    scobj->img_array = oxr_alloc_swapchain_imgs (scobj->handle);
+        /* FBO */
+        glGenFramebuffers (1, &fbo);
+        glBindFramebuffer (GL_FRAMEBUFFER, fbo);
+        glFramebufferTexture2D    (GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,   tex_c, 0);
+        glFramebufferRenderbuffer (GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_RENDERBUFFER, tex_z);
 
+        GLenum stat = glCheckFramebufferStatus (GL_FRAMEBUFFER);
+        if (stat != GL_FRAMEBUFFER_COMPLETE)
+        {
+            LOGE ("FBO Imcomplete");
+            return -1;
+        }
+        glBindRenderbuffer (GL_RENDERBUFFER, 0);
+        glBindFramebuffer (GL_FRAMEBUFFER, 0);
+
+        render_target_t rtarget;
+        rtarget.texc_id = tex_c;
+        rtarget.texz_id = tex_z;
+        rtarget.fbo_id  = fbo;
+        rtarget.width   = width;
+        rtarget.height  = height;
+        rtarget_array.push_back (rtarget);
+
+        LOGI ("SwapchainImage[%d/%d] FBO:%d, TEXC:%d, TEXZ:%d, WH(%d, %d)", i, imgCnt, fbo, tex_c, tex_z, width, height);
+    }
+    free (img_gles);
     return 0;
 }
 
-uint32_t
+
+static uint32_t
 oxr_acquire_swapchain_img (XrSwapchain swapchain)
 {
     uint32_t imgIdx;
@@ -269,29 +308,60 @@ oxr_acquire_swapchain_img (XrSwapchain swapchain)
     return imgIdx;
 }
 
-int
-oxr_acquire_swapchain_image (swapchain_obj_t *scobj, XrSwapchainImageOpenGLESKHR *glesImg, XrSwapchainSubImage *subImg)
-{
-    subImg->swapchain               = scobj->handle;
-    subImg->imageRect.offset.x      = 0;
-    subImg->imageRect.offset.y      = 0;
-    subImg->imageRect.extent.width  = scobj->width;
-    subImg->imageRect.extent.height = scobj->height;
-    subImg->imageArrayIndex         = 0;
 
-    uint32_t imgIdx = oxr_acquire_swapchain_img (scobj->handle);
-    *glesImg = scobj->img_array[imgIdx];
+std::vector<viewsurface_t>
+oxr_create_viewsurface (XrInstance instance, XrSystemId sysid, XrSession session)
+{
+    std::vector<viewsurface_t> sfcArray;
+
+    uint32_t viewCount;
+    XrViewConfigurationView *conf_views = oxr_enumerate_viewconfig (instance, sysid, &viewCount);
+
+    for (uint32_t i = 0; i < viewCount; i ++)
+    {
+        const XrViewConfigurationView &vp = conf_views[i];
+        uint32_t vp_w = vp.recommendedImageRectWidth;
+        uint32_t vp_h = vp.recommendedImageRectHeight;
+
+        LOGI("Swapchain for view %d: WH(%d, %d), SampleCount=%d", i, vp_w, vp_h, vp.recommendedSwapchainSampleCount);
+
+        viewsurface_t sfc;
+        sfc.width     = vp_w;
+        sfc.height    = vp_h;
+        sfc.swapchain = oxr_create_swapchain (session, sfc.width, sfc.height);
+        oxr_alloc_swapchain_rtargets (sfc.swapchain, sfc.width, sfc.height, sfc.rtarget_array);
+
+        sfcArray.push_back (sfc);
+    }
+
+    return sfcArray;
+}
+
+
+int
+oxr_acquire_viewsurface (viewsurface_t &viewSurface, render_target_t &rtarget, XrSwapchainSubImage &subImg)
+{
+    subImg.swapchain               = viewSurface.swapchain;
+    subImg.imageRect.offset.x      = 0;
+    subImg.imageRect.offset.y      = 0;
+    subImg.imageRect.extent.width  = viewSurface.width;
+    subImg.imageRect.extent.height = viewSurface.height;
+    subImg.imageArrayIndex         = 0;
+
+    uint32_t imgIdx = oxr_acquire_swapchain_img (viewSurface.swapchain);
+    rtarget = viewSurface.rtarget_array[imgIdx];
 
     return 0;
 }
 
-void
-oxr_release_swapchain_image (swapchain_obj_t *scobj)
+int
+oxr_release_viewsurface (viewsurface_t &viewSurface)
 {
     XrSwapchainImageReleaseInfo releaseInfo {XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
-    xrReleaseSwapchainImage (scobj->handle, &releaseInfo);
-}
+    xrReleaseSwapchainImage (viewSurface.swapchain, &releaseInfo);
 
+    return 0;
+}
 
 
 
@@ -483,7 +553,7 @@ oxr_is_session_running ()
 
 static XrEventDataBuffer s_evDataBuf;
 
-XrEventDataBaseHeader *
+static XrEventDataBaseHeader *
 oxr_poll_event (XrInstance instance, XrSession session)
 {
     XrEventDataBaseHeader *ev = reinterpret_cast<XrEventDataBaseHeader*>(&s_evDataBuf);

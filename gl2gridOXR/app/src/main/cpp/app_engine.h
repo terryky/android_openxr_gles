@@ -23,10 +23,8 @@ private:
     XrSession           m_session;
     XrSpace             m_appSpace;
     XrSystemId          m_systemId;
-    std::vector<XrView> m_views;
-    swapchain_obj_t     m_scobj[2];
+    std::vector<viewsurface_t> m_viewSurface;
 
-    void CreateSwapchains();
     void RenderFrame();
     bool RenderLayer(XrTime dpy_time,
                      std::vector<XrCompositionLayerProjectionView> &layerViews,

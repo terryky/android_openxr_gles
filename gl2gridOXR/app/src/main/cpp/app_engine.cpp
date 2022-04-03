@@ -46,28 +46,7 @@ AppEngine::InitOpenXR_GLES ()
     m_session  = oxr_create_session (m_instance, m_systemId);
     m_appSpace = oxr_create_ref_space (m_session, XR_REFERENCE_SPACE_TYPE_LOCAL);
 
-    CreateSwapchains ();
-}
-
-
-void
-AppEngine::CreateSwapchains()
-{
-    uint32_t viewCount;
-    XrViewConfigurationView *conf_views = oxr_enumerate_viewconfig (m_instance, m_systemId, &viewCount);
-
-    // Create and cache view buffer for xrLocateViews later.
-    m_views.resize (viewCount, {XR_TYPE_VIEW});
-
-    // Create a swapchain for each view.
-    for (uint32_t i = 0; i < viewCount; i++) {
-        const XrViewConfigurationView &vp = conf_views[i];
-        uint32_t vp_w = vp.recommendedImageRectWidth;
-        uint32_t vp_h = vp.recommendedImageRectHeight;
-
-        LOGI("Swapchain for view %d: WH(%d, %d), SampleCount=%d", i, vp_w, vp_h, vp.recommendedSwapchainSampleCount);
-        oxr_create_swapchain (&m_scobj[i], m_session, vp_w, vp_h);
-    }
+    m_viewSurface = oxr_create_viewsurface (m_instance, m_systemId, m_session);
 }
 
 
@@ -116,25 +95,27 @@ AppEngine::RenderLayer(XrTime dpy_time,
                        XrCompositionLayerProjection                  &layer)
 {
     /* Acquire View Location */
-    uint32_t viewCount = (uint32_t)m_views.size();
-    oxr_locate_views (m_session, dpy_time, m_appSpace, &viewCount, m_views.data());
+    uint32_t viewCount = (uint32_t)m_viewSurface.size();
+
+    std::vector<XrView> views(viewCount);
+    oxr_locate_views (m_session, dpy_time, m_appSpace, &viewCount, views.data());
 
     layerViews.resize (viewCount);
 
     /* Render each view */
     for (uint32_t i = 0; i < viewCount; i++) {
-        XrSwapchainImageOpenGLESKHR glesImg;
-        XrSwapchainSubImage         subImg;
+        XrSwapchainSubImage subImg;
+        render_target_t     rtarget;
 
-        oxr_acquire_swapchain_image (&m_scobj[i], &glesImg, &subImg);
+        oxr_acquire_viewsurface (m_viewSurface[i], rtarget, subImg);
 
-        render_gles_scene (&glesImg, subImg.imageRect);
+        render_gles_scene (rtarget, subImg.imageRect);
 
-        oxr_release_swapchain_image (&m_scobj[i]);
+        oxr_release_viewsurface (m_viewSurface[i]);
 
         layerViews[i] = {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW};
-        layerViews[i].pose     = m_views[i].pose;
-        layerViews[i].fov      = m_views[i].fov;
+        layerViews[i].pose     = views[i].pose;
+        layerViews[i].fov      = views[i].fov;
         layerViews[i].subImage = subImg;
     }
     layer = {XR_TYPE_COMPOSITION_LAYER_PROJECTION};

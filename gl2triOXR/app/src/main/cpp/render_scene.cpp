@@ -4,9 +4,7 @@
 #include "util_shader.h"
 
 
-static GLuint           s_fbo_swapchain;
 static shader_obj_t     s_sobj;
-
 
 static GLfloat s_vtx[] =
 {
@@ -56,22 +54,18 @@ init_gles_scene ()
 {
     generate_shader (&s_sobj, s_strVS, s_strFS);
 
-    glGenFramebuffers (1, &s_fbo_swapchain);
-
     return 0;
 }
 
 int
-render_gles_scene (XrSwapchainImageOpenGLESKHR *swapchainImg, XrRect2Di imgRect)
+render_gles_scene (render_target_t &rtarget, XrRect2Di imgRect)
 {
     int view_x = imgRect.offset.x;
     int view_y = imgRect.offset.y;
     int view_w = imgRect.extent.width;
     int view_h = imgRect.extent.height;
-    uint32_t texc = swapchainImg->image;
 
-    glBindFramebuffer(GL_FRAMEBUFFER, s_fbo_swapchain);
-    glFramebufferTexture2D (GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texc, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, rtarget.fbo_id);
 
     glViewport(view_x, view_y, view_w, view_h);
 
