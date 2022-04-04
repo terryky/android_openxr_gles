@@ -429,6 +429,11 @@ oxr_create_action_space (XrSession session, XrAction action, XrPath subpath)
 }
 
 
+
+
+/* ---------------------------------------------------------------------------- *
+ *  Action operation
+ * ---------------------------------------------------------------------------- */
 XrActionSet
 oxr_create_actionset (XrInstance instance, const char *name, const char *local_name, int priority)
 {
@@ -457,6 +462,32 @@ oxr_create_action (XrActionSet actionset, XrActionType type, const char *name, c
     xrCreateAction (actionset, &ci, &action);
 
     return action;
+}
+
+
+int
+oxr_attach_actionsets (XrSession session, XrActionSet actionSet)
+{
+    XrSessionActionSetsAttachInfo info {XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO};
+    info.countActionSets = 1;
+    info.actionSets      = &actionSet;
+    xrAttachSessionActionSets (session, &info);
+
+    return 0;
+}
+
+
+int
+oxr_sync_actions (XrSession session, XrActionSet actionSet)
+{
+    const XrActiveActionSet activeActionSet {actionSet, XR_NULL_PATH};
+
+    XrActionsSyncInfo syncInfo {XR_TYPE_ACTIONS_SYNC_INFO};
+    syncInfo.countActiveActionSets = 1;
+    syncInfo.activeActionSets      = &activeActionSet;
+    xrSyncActions (session, &syncInfo);
+
+    return 0;
 }
 
 

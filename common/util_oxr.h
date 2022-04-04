@@ -66,9 +66,13 @@ int         oxr_end_frame   (XrSession session, XrTime dpyTime, std::vector<XrCo
 XrSpace     oxr_create_ref_space    (XrSession session, XrReferenceSpaceType ref_space_type);
 XrSpace     oxr_create_action_space (XrSession session, XrAction action, XrPath subpath);
 
+
+/* Action operation */
 XrActionSet oxr_create_actionset (XrInstance instance, const char *name, const char *local_name, int priority);
 XrAction    oxr_create_action (XrActionSet actionset, XrActionType type, const char *name, const char *local_name,
                                 int subpath_num, XrPath *subpath_array);
+int         oxr_attach_actionsets (XrSession session, XrActionSet actionSet);
+int         oxr_sync_actions      (XrSession session, XrActionSet actionSet);
 
 
 /* Session operation */
