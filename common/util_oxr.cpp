@@ -465,6 +465,15 @@ oxr_create_action (XrActionSet actionset, XrActionType type, const char *name, c
 }
 
 
+XrPath
+oxr_str2path (XrInstance instance, const char *str)
+{
+    XrPath path;
+    xrStringToPath (instance, str, &path);
+    return path;
+}
+
+
 int
 oxr_bind_interaction (XrInstance instance, const char *profile, std::vector<XrActionSuggestedBinding> &bindings)
 {

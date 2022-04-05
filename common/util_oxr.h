@@ -71,6 +71,7 @@ XrSpace     oxr_create_action_space (XrSession session, XrAction action, XrPath 
 XrActionSet oxr_create_actionset (XrInstance instance, const char *name, const char *local_name, int priority);
 XrAction    oxr_create_action (XrActionSet actionset, XrActionType type, const char *name, const char *local_name,
                                 int subpath_num, XrPath *subpath_array);
+XrPath      oxr_str2path (XrInstance instance, const char *str);
 int         oxr_bind_interaction (XrInstance instance, const char *profile,
                                   std::vector<XrActionSuggestedBinding> &bindings);
 int         oxr_attach_actionsets (XrSession session, XrActionSet actionSet);
