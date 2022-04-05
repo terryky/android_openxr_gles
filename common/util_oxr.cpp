@@ -466,6 +466,23 @@ oxr_create_action (XrActionSet actionset, XrActionType type, const char *name, c
 
 
 int
+oxr_bind_interaction (XrInstance instance, const char *profile, std::vector<XrActionSuggestedBinding> &bindings)
+{
+    XrPath profPath;
+    xrStringToPath (instance, profile, &profPath);
+
+    XrInteractionProfileSuggestedBinding bind {XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
+    bind.interactionProfile     = profPath;
+    bind.suggestedBindings      = bindings.data();
+    bind.countSuggestedBindings = (uint32_t)bindings.size();
+
+    xrSuggestInteractionProfileBindings (instance, &bind);
+
+    return 0;
+}
+
+
+int
 oxr_attach_actionsets (XrSession session, XrActionSet actionSet)
 {
     XrSessionActionSetsAttachInfo info {XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO};
