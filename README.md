@@ -16,7 +16,10 @@ VR sample applications on Android NDK using OpenXR + OpenGLES. (especially  for 
 - Just a triangle in 3D space with parallax.<br>
 [<img src="gl2tri3dOXR/gl2tri3dOXR.png" width=600>](https://github.com/terryky/android_openxr_gles/tree/master/gl2tri3dOXR)
 
-### [gl2teapot](https://github.com/terryky/android_openxr_gles/tree/master/gl2teapotOXR)
+### [gl2teapotOXR](https://github.com/terryky/android_openxr_gles/tree/master/gl2teapotOXR)
 - draw a teapot 3D model.<br>
 [<img src="gl2teapotOXR/gl2teapotOXR.png" width=600>](https://github.com/terryky/android_openxr_gles/tree/master/gl2teapotOXR)
 
+### [gl2imguiOXR](https://github.com/terryky/android_openxr_gles/tree/master/gl2imguiOXR)
+- draw UI Layer using ImGui.<br>
+[<img src="gl2imguiOXR/gl2imguiOXR.png" width=600>](https://github.com/terryky/android_openxr_gles/tree/master/gl2imguiOXR)
