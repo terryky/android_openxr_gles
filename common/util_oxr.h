@@ -13,12 +13,14 @@
 #include <sys/system_properties.h>
 #endif
 
+#include <GLES3/gl31.h>
+#include "util_egl.h"
+
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
 #include <openxr/openxr_reflection.h>
 #include <vector>
 
-#include <GLES3/gl31.h>
 #include "util_log.h"
 #include "util_render_target.h"
 
