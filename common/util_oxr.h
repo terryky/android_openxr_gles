@@ -79,6 +79,18 @@ int         oxr_bind_interaction (XrInstance instance, const char *profile,
 int         oxr_attach_actionsets (XrSession session, XrActionSet actionSet);
 int         oxr_sync_actions      (XrSession session, XrActionSet actionSet);
 
+XrActionStateBoolean
+            oxr_get_action_state_boolean (XrSession session, XrAction action, XrPath subpath);
+XrActionStateFloat
+            oxr_get_action_state_float   (XrSession session, XrAction action, XrPath subpath);
+XrActionStatePose
+            oxr_get_action_state_pose    (XrSession session, XrAction action, XrPath subpath);
+XrActionStateVector2f
+            oxr_get_action_state_vector2 (XrSession session, XrAction action, XrPath subpath);
+
+int         oxr_apply_haptic_feedback_vibrate (XrSession session, XrAction action, XrPath subpath,
+                                               XrDuration dura, float freq, float amp);
+
 
 /* Session operation */
 XrSession   oxr_create_session (XrInstance instance, XrSystemId sysid);

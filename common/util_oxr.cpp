@@ -457,8 +457,8 @@ oxr_create_action (XrActionSet actionset, XrActionType type, const char *name, c
     ci.actionType          = type;
     ci.countSubactionPaths = subpath_num;
     ci.subactionPaths      = subpath_array;
-    strcpy (ci.actionName,          name);
-    strcpy (ci.localizedActionName, local_name);
+    strncpy (ci.actionName,          name,       XR_MAX_ACTION_NAME_SIZE);
+    strncpy (ci.localizedActionName, local_name, XR_MAX_LOCALIZED_ACTION_NAME_SIZE);
     xrCreateAction (actionset, &ci, &action);
 
     return action;
@@ -517,7 +517,78 @@ oxr_sync_actions (XrSession session, XrActionSet actionSet)
 }
 
 
+XrActionStateBoolean
+oxr_get_action_state_boolean (XrSession session, XrAction action, XrPath subpath)
+{
+    XrActionStateGetInfo getInfo {XR_TYPE_ACTION_STATE_GET_INFO};
+    getInfo.action        = action;
+    getInfo.subactionPath = subpath;
 
+    XrActionStateBoolean stat {XR_TYPE_ACTION_STATE_BOOLEAN};
+    xrGetActionStateBoolean (session, &getInfo, &stat);
+
+    return stat;
+}
+
+
+XrActionStateFloat
+oxr_get_action_state_float (XrSession session, XrAction action, XrPath subpath)
+{
+    XrActionStateGetInfo getInfo {XR_TYPE_ACTION_STATE_GET_INFO};
+    getInfo.action        = action;
+    getInfo.subactionPath = subpath;
+
+    XrActionStateFloat stat {XR_TYPE_ACTION_STATE_FLOAT};
+    xrGetActionStateFloat (session, &getInfo, &stat);
+
+    return stat;
+}
+
+
+XrActionStatePose
+oxr_get_action_state_pose (XrSession session, XrAction action, XrPath subpath)
+{
+    XrActionStateGetInfo getInfo {XR_TYPE_ACTION_STATE_GET_INFO};
+    getInfo.action        = action;
+    getInfo.subactionPath = subpath;
+
+    XrActionStatePose stat {XR_TYPE_ACTION_STATE_POSE};
+    xrGetActionStatePose (session, &getInfo, &stat);
+
+    return stat;
+}
+
+
+XrActionStateVector2f
+oxr_get_action_state_vector2 (XrSession session, XrAction action, XrPath subpath)
+{
+    XrActionStateGetInfo getInfo = {XR_TYPE_ACTION_STATE_GET_INFO};
+    getInfo.action        = action;
+    getInfo.subactionPath = subpath;
+
+    XrActionStateVector2f stat = {XR_TYPE_ACTION_STATE_VECTOR2F};
+    xrGetActionStateVector2f (session, &getInfo, &stat);
+
+    return stat;
+}
+
+
+int
+oxr_apply_haptic_feedback_vibrate (XrSession session, XrAction action, XrPath subpath,
+                                   XrDuration dura, float freq, float amp)
+{
+    XrHapticVibration vibration {XR_TYPE_HAPTIC_VIBRATION};
+    vibration.duration  = dura;
+    vibration.frequency = freq;
+    vibration.amplitude = amp;
+
+    XrHapticActionInfo info {XR_TYPE_HAPTIC_ACTION_INFO};
+    info.action        = action;
+    info.subactionPath = subpath;
+    xrApplyHapticFeedback (session, &info, (XrHapticBaseHeader*)&vibration);
+
+    return 0;
+}
 
 /* ---------------------------------------------------------------------------- *
  *  Session operation
