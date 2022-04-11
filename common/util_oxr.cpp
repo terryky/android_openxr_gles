@@ -2,6 +2,7 @@
  * The MIT License (MIT)
  * Copyright (c) 2022 terryky1220@gmail.com
  * ------------------------------------------------ */
+#include <string>
 #include <GLES3/gl31.h>
 #include "util_egl.h"
 #include "util_oxr.h"
@@ -82,6 +83,22 @@ oxr_create_instance (void *appVM, void *appCtx)
 }
 
 
+std::string
+oxr_get_runtime_name (XrInstance instance)
+{
+    XrInstanceProperties prop = {XR_TYPE_INSTANCE_PROPERTIES};
+    xrGetInstanceProperties (instance, &prop);
+
+    char strbuf[128];
+    snprintf (strbuf, 127, "%s (%u.%u.%u)", prop.runtimeName,
+            XR_VERSION_MAJOR (prop.runtimeVersion),
+            XR_VERSION_MINOR (prop.runtimeVersion),
+            XR_VERSION_PATCH (prop.runtimeVersion));
+    std::string runtime_name = strbuf;
+    return runtime_name;
+}
+
+
 /* ---------------------------------------------------------------------------- *
  *  Get OpenXR Sysem
  * ---------------------------------------------------------------------------- */
@@ -110,6 +127,17 @@ oxr_get_system (XrInstance instance)
     LOGI ("-----------------------------------------------------------------");
 
     return sysid;
+}
+
+
+std::string
+oxr_get_system_name (XrInstance instance, XrSystemId sysid)
+{
+    XrSystemProperties prop = {XR_TYPE_SYSTEM_PROPERTIES};
+    xrGetSystemProperties (instance, sysid, &prop);
+
+    std::string sys_name = prop.systemName;
+    return sys_name;
 }
 
 
