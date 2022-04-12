@@ -43,10 +43,6 @@ void main (void)                                  \
     gl_FragColor = v_color;                       \
 }                                                 ";
 
-struct engine {
-    struct android_app* app;
-    shader_obj_t sobj;
-};
 
 
 int
@@ -56,6 +52,7 @@ init_gles_scene ()
 
     return 0;
 }
+
 
 int
 render_gles_scene (render_target_t &rtarget, XrRect2Di imgRect)
