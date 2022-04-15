@@ -25,6 +25,7 @@ MAKE_TO_STRING_FUNC(XrResult);
 MAKE_TO_STRING_FUNC(XrFormFactor);
 
 
+static XrInstance s_instance = XR_NULL_HANDLE;
 
 
 /* ---------------------------------------------------------------------------- *
@@ -70,6 +71,7 @@ oxr_create_instance (void *appVM, void *appCtx)
 
     XrInstance instance;
     xrCreateInstance (&ci, &instance);
+    s_instance = instance;
 
     /* query instance name, version */
     XrInstanceProperties prop = {XR_TYPE_INSTANCE_PROPERTIES};
@@ -109,7 +111,7 @@ oxr_get_system (XrInstance instance)
     sysInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
 
     XrSystemId sysid;
-    xrGetSystem (instance, &sysInfo, &sysid);
+    OXR_CHECK (xrGetSystem (0, &sysInfo, &sysid));
 
     /* query system properties*/
     XrSystemProperties prop = {XR_TYPE_SYSTEM_PROPERTIES};
@@ -776,3 +778,18 @@ oxr_poll_events (XrInstance instance, XrSession session, bool *exit_loop, bool *
 
 
 
+/* ---------------------------------------------------------------------------- *
+ *  Error handling
+ * ---------------------------------------------------------------------------- */
+void
+oxr_check_errors (XrResult ret, const char *func, const char *fname, int line)
+{
+    if (XR_FAILED(ret))
+    {
+        char errbuf[XR_MAX_RESULT_STRING_SIZE];
+        xrResultToString (s_instance, ret, errbuf);
+
+        LOGE ("[OXR ERROR] %s(%d):%s: %s\n", fname, line, func, errbuf);
+    }
+}
+ 
