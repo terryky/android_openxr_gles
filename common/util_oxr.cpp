@@ -111,7 +111,7 @@ oxr_get_system (XrInstance instance)
     sysInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
 
     XrSystemId sysid;
-    OXR_CHECK (xrGetSystem (0, &sysInfo, &sysid));
+    OXR_CHECK (xrGetSystem (instance, &sysInfo, &sysid));
 
     /* query system properties*/
     XrSystemProperties prop = {XR_TYPE_SYSTEM_PROPERTIES};

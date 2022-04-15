@@ -15,7 +15,9 @@
 
 static shader_obj_t     s_sobj;
 static render_target_t  s_rtarget;
-static imgui_data_t     s_imgui_data;
+
+#define UI_WIN_W 300
+#define UI_WIN_H 350
 
 
 static char s_strVS[] = "                                   \n\
@@ -49,9 +51,9 @@ init_gles_scene ()
     init_teapot ();
     init_texplate ();
     init_dbgstr (0, 0);
-    init_imgui (300, 300);
+    init_imgui (UI_WIN_W, UI_WIN_H);
 
-    create_render_target (&s_rtarget, 300, 300, RTARGET_COLOR);
+    create_render_target (&s_rtarget, UI_WIN_W, UI_WIN_H, RTARGET_COLOR);
 
     return 0;
 }
@@ -134,14 +136,15 @@ draw_uiplane (float *matPVMbase,
         static uint32_t prev_us = 0;
         if (sceneData.viewID == 0)
         {
-            s_imgui_data.interval_ms = (sceneData.elapsed_us - prev_us) / 1000.0f;
+            sceneData.interval_ms = (sceneData.elapsed_us - prev_us) / 1000.0f;
             prev_us = sceneData.elapsed_us;
         }
-        s_imgui_data.elapsed_ms   = sceneData.elapsed_us / 1000;
-        s_imgui_data.viewport     = layerView.subImage.imageRect;
-        s_imgui_data.views        = sceneData.views;
 
-        invoke_imgui (&s_imgui_data);
+        sceneData.gl_version = glGetString (GL_VERSION);
+        sceneData.gl_vendor  = glGetString (GL_VENDOR);
+        sceneData.gl_render  = glGetString (GL_RENDERER);
+        sceneData.viewport   = layerView.subImage.imageRect;
+        invoke_imgui (&sceneData);
     }
 
     /* restore FBO */
@@ -149,13 +152,20 @@ draw_uiplane (float *matPVMbase,
 
     glEnable (GL_DEPTH_TEST);
 
-    float matPVM[16], matT[16];
-    matrix_identity (matT);
-    matrix_translate (matT, 0.4f, 0.0f, -0.8f);
-    matrix_rotate (matT, -30.0f, 0.0f, 1.0f, 0.0f);
-    matrix_scale (matT, 1.5f, 1.5f, 1.0f);
-    matrix_mult (matPVM, matPVMbase, matT);
-    draw_tex_plate (s_rtarget.texc_id, matPVM, RENDER2D_FLIP_V);
+    {
+        float matPVM[16], matT[16];
+        float win_x = 1.0f;
+        float win_y = 0.0f;
+        float win_z =-2.0f;
+        float win_w = 1.0f;
+        float win_h = win_w * ((float)UI_WIN_H / (float)UI_WIN_W);
+        matrix_identity (matT);
+        matrix_translate (matT, win_x, win_y, win_z);
+        matrix_rotate (matT, -30.0f, 0.0f, 1.0f, 0.0f);
+        matrix_scale (matT, win_w, win_h, 1.0f);
+        matrix_mult (matPVM, matPVMbase, matT);
+        draw_tex_plate (s_rtarget.texc_id, matPVM, RENDER2D_FLIP_V);
+    }
 
     return 0;
 }
@@ -163,7 +173,7 @@ draw_uiplane (float *matPVMbase,
 
 int
 render_gles_scene (XrCompositionLayerProjectionView &layerView,
-                   render_target_t                  &rtarget, 
+                   render_target_t                  &rtarget,
                    XrPosef                          &viewPose,
                    XrPosef                          &stagePose,
                    scene_data_t                     &sceneData)

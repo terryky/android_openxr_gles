@@ -49,6 +49,9 @@ AppEngine::InitOpenXR_GLES ()
     m_viewSpace  = oxr_create_ref_space (m_session, XR_REFERENCE_SPACE_TYPE_VIEW);
 
     m_viewSurface = oxr_create_viewsurface (m_instance, m_systemId, m_session);
+
+    m_runtime_name = oxr_get_runtime_name (m_instance);
+    m_system_name  = oxr_get_system_name (m_instance, m_systemId);
 }
 
 
@@ -130,9 +133,11 @@ AppEngine::RenderLayer(XrTime dpy_time,
         layerViews[i].subImage = subImg;
 
         scene_data_t sceneData;
-        sceneData.elapsed_us = elapsed_us;
-        sceneData.viewID     = i;
-        sceneData.views      = views;
+        sceneData.runtime_name  = m_runtime_name;
+        sceneData.system_name   = m_system_name;
+        sceneData.elapsed_us    = elapsed_us;
+        sceneData.viewID        = i;
+        sceneData.views         = views;
         render_gles_scene (layerViews[i], rtarget, viewLoc.pose, stageLoc.pose, sceneData);
 
         oxr_release_viewsurface (m_viewSurface[i]);

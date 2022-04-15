@@ -89,35 +89,55 @@ imgui_is_anywindow_hovered ()
 }
 
 static void
-render_gui (imgui_data_t *imgui_data)
+render_gui (scene_data_t *scn_data)
 {
     int win_w = 300;
-    int win_h = 300;
+    int win_h = 0;
     int win_x = 0;
     int win_y = 0;
 
     s_win_num = 0;
 
     /* Show main window */
+    win_y += win_h;
+    win_h = 120;
     ImGui::SetNextWindowPos (ImVec2(_X(win_x), _Y(win_y)), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(_X(win_w), _Y(win_h)), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Information");
+    ImGui::Begin("Runtime");
     {
-        ImGui::Text("Elapsed  : %d [ms]", imgui_data->elapsed_ms);
-        ImGui::Text("Interval : %6.3f [ms]", imgui_data->interval_ms);
+        ImGui::Text("OXR_RUNTIME: %s", scn_data->runtime_name.c_str());
+        ImGui::Text("OXR_SYSTEM : %s", scn_data->system_name.c_str());
+        ImGui::Text("GL_VERSION : %s", scn_data->gl_version);
+        ImGui::Text("GL_VENDOR  : %s", scn_data->gl_vendor);
+        ImGui::Text("GL_RENDERER: %s", scn_data->gl_render);
+
+        s_win_pos [s_win_num] = ImGui::GetWindowPos  ();
+        s_win_size[s_win_num] = ImGui::GetWindowSize ();
+        s_win_num ++;
+    }
+    ImGui::End();
+
+    win_y += win_h;
+    win_h = 220;
+    ImGui::SetNextWindowPos (ImVec2(_X(win_x), _Y(win_y)), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(_X(win_w), _Y(win_h)), ImGuiCond_FirstUseEver);
+    ImGui::Begin("View Info");
+    {
+        ImGui::Text("Elapsed  : %d [ms]",    scn_data->elapsed_us / 1000);
+        ImGui::Text("Interval : %6.3f [ms]", scn_data->interval_ms);
         ImGui::Text("Viewport : (%d, %d, %d, %d)", 
-            imgui_data->viewport.offset.x,     imgui_data->viewport.offset.y,
-            imgui_data->viewport.extent.width, imgui_data->viewport.extent.height);
+            scn_data->viewport.offset.x,     scn_data->viewport.offset.y,
+            scn_data->viewport.extent.width, scn_data->viewport.extent.height);
 
         for (uint32_t i = 0; i < 2; i ++)
         {
             ImGui::SetNextTreeNodeOpen(true, ImGuiCond_Once);
             if (ImGui::TreeNode("View")) 
             {
-                const XrVector3f    &pos = imgui_data->views[i].pose.position;
-                const XrQuaternionf &rot = imgui_data->views[i].pose.orientation;
-                const XrFovf        &fov = imgui_data->views[i].fov;
-                ImGui::Text("pos (%6.3f,%6.3f,%6.3f)", pos.x, pos.y, pos.z);
+                const XrVector3f    &pos = scn_data->views[i].pose.position;
+                const XrQuaternionf &rot = scn_data->views[i].pose.orientation;
+                const XrFovf        &fov = scn_data->views[i].fov;
+                ImGui::Text("pos (%6.3f,%6.3f,%6.3f)",       pos.x, pos.y, pos.z);
                 ImGui::Text("rot (%6.3f,%6.3f,%6.3f,%6.3f)", rot.x, rot.y, rot.z, rot.w);
                 ImGui::Text("fov (%6.3f,%6.3f,%6.3f,%6.3f)", fov.angleLeft, fov.angleRight, fov.angleUp, fov.angleDown);
 
@@ -133,12 +153,12 @@ render_gui (imgui_data_t *imgui_data)
 }
 
 int
-invoke_imgui (imgui_data_t *imgui_data)
+invoke_imgui (scene_data_t *scn_data)
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui::NewFrame();
 
-    render_gui (imgui_data);
+    render_gui (scn_data);
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

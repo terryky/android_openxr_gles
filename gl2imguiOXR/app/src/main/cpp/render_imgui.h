@@ -5,23 +5,19 @@
 #ifndef UTIL_IMGUI_H_
 #define UTIL_IMGUI_H_
 
+#include <string>
 #include "util_oxr.h"
+#include "render_scene.h"
 
 typedef struct _imgui_data_t
 {
-    int   elapsed_ms;
-    float interval_ms;
-
-    XrRect2Di           viewport;
-    std::vector<XrView> views;
-
 } imgui_data_t;
 
 int  init_imgui (int width, int height);
 void imgui_mousebutton (int button, int state, int x, int y);
 void imgui_mousemove (int x, int y);
 
-int invoke_imgui (imgui_data_t *imgui_data);
+int invoke_imgui (scene_data_t *scn_data);
 
 #endif /* UTIL_IMGUI_H_ */
  

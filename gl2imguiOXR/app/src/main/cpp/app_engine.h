@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "util_egl.h"
 #include "util_oxr.h"
 
@@ -28,6 +29,10 @@ private:
 
     XrSystemId          m_systemId;
     std::vector<viewsurface_t> m_viewSurface;
+
+    std::string         m_runtime_name;
+    std::string         m_system_name;
+
 
     void RenderFrame();
     bool RenderLayer(XrTime dpy_time,

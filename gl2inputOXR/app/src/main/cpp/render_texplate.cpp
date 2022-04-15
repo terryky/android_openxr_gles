@@ -12,11 +12,11 @@ static int s_loc_color;
 
 
 static float varray[] =
-{   -0.1,  0.1,
-    -0.1, -0.1,
-     0.1,  0.1,
-     0.1, -0.1 };
- 
+{   -0.5,  0.5, 0.0,
+    -0.5, -0.5, 0.0,
+     0.5,  0.5, 0.0,
+     0.5, -0.5, 0.0 };
+
 /* ------------------------------------------------------ *
  *  shader for Texture
  * ------------------------------------------------------ */
@@ -147,7 +147,7 @@ draw_texture_in (texparam_t *tparam)
     if (sobj->loc_vtx >= 0)
     {
         glEnableVertexAttribArray (sobj->loc_vtx);
-        glVertexAttribPointer (sobj->loc_vtx, 2, GL_FLOAT, GL_FALSE, 0, varray);
+        glVertexAttribPointer (sobj->loc_vtx, 3, GL_FLOAT, GL_FALSE, 0, varray);
     }
 
     glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
@@ -156,7 +156,6 @@ draw_texture_in (texparam_t *tparam)
 
     GLASSERT ();
     return 0;
-    
 }
 
 
@@ -171,7 +170,7 @@ draw_tex_plate (int texid, float *matPVM, int upsidedown)
     tparam.color[2]= 1.0f;
     tparam.color[3]= 1.0f;
     tparam.upsidedown = upsidedown;
-    tparam.matPVM  = matPVM; 
+    tparam.matPVM  = matPVM;
     draw_texture_in (&tparam);
 
     return 0;

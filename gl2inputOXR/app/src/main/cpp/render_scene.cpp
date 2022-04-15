@@ -156,13 +156,14 @@ draw_uiplane (float *matPVMbase,
 
     {
         float matPVM[16], matT[16];
-        float win_x = 0.5f + sceneData.inputState.stickVal[1].x * 0.5f;
+        float win_x = 1.0f + sceneData.inputState.stickVal[1].x * 0.5f;
         float win_y = 0.0f + sceneData.inputState.stickVal[1].y * 0.5f;
-        float win_w = 1.5f;
+        float win_z =-2.0f;
+        float win_w = 1.0f;
         float win_h = win_w * ((float)UI_WIN_H / (float)UI_WIN_W);
         matrix_identity (matT);
-        matrix_translate (matT, win_x, win_y, -0.8f);
-        matrix_rotate (matT, -20.0f, 0.0f, 1.0f, 0.0f);
+        matrix_translate (matT, win_x, win_y, win_z);
+        matrix_rotate (matT, -30.0f, 0.0f, 1.0f, 0.0f);
         matrix_scale (matT, win_w, win_h, 1.0f);
         matrix_mult (matPVM, matPVMbase, matT);
         draw_tex_plate (s_rtarget.texc_id, matPVM, RENDER2D_FLIP_V);
