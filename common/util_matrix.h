@@ -34,6 +34,7 @@ int  matrix_is2d (float *m);
 int  matrix_is2d_scale_trans (float *m);
 
 void matrix_multvec2 (float *m, float *svec, float *dvec);
+void matrix_multvec3 (float *m, float *svec, float *dvec);
 void matrix_multvec4 (float *m, float *svec, float *dvec);
 
 void matrix_print (float *m);
@@ -48,6 +49,19 @@ void matrix_invert (float *m);
 
 float vec3_length (float *v);
 float vec3_normalize (float *v);
+float vec3_dot (float *v0, float *v1);
+void  vec3_cross (float *v, float *v0, float *v1);
+void  vec3_sub   (float *v, float *v0, float *v1);
+void  vec3_get_triangle_normal (float *nrm, float *p0, float *p1, float *p2);
+float vec3_get_angle_of_vectors (float *v0, float *v1);
+
+int   ray_intersect (float *r0, float *r1,
+                     float *t0, float *t1, float *t2,
+                     float *pout);
+void  ray_proj_perspective (float *ray,
+                            float fovy, float aspect, float zfar,
+                            int vp_w, int vp_h,
+                            int px,   int py);
 
 void quaternion_mult(float *lpR, float *lpP, float *lpQ);
 void quaternion_to_matrix(float *lpM, float *lpQ);

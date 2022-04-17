@@ -58,6 +58,160 @@ vec2_normalize (float *v)
     return len;
 }
 
+float
+vec3_dot (float *v0, float *v1)
+{
+    float dot = 0.0f;
+    dot += v0[0] * v1[0];
+    dot += v0[1] * v1[1];
+    dot += v0[2] * v1[2];
+
+    return dot;
+}
+
+void
+vec3_cross (float *v, float *v0, float *v1)
+{
+    v[0] = v0[1] * v1[2] - v0[2] * v1[1];
+    v[1] = v0[2] * v1[0] - v0[0] * v1[2];
+    v[2] = v0[0] * v1[1] - v0[1] * v1[0];
+}
+
+void
+vec3_sub (float *v, float *v0, float *v1)
+{
+    v[0] = v0[0] - v1[0];
+    v[1] = v0[1] - v1[1];
+    v[2] = v0[2] - v1[2];
+}
+
+void
+vec3_get_triangle_normal (float *nrm, float *p0, float *p1, float *p2)
+{
+    float e1[3], e2[3];
+
+    /* edge vector of the triangle */
+    vec3_sub (e1, p1, p0);
+    vec3_sub (e2, p2, p0);
+
+    /* normal vector of the triangle */
+    vec3_cross (nrm, e1, e2 );
+    vec3_normalize (nrm);
+}
+
+float
+vec3_get_angle_of_vectors (float *v0, float *v1)
+{
+    float len0 = vec3_length (v0);
+    float len1 = vec3_length (v1);
+
+    if (len0 * len1 == 0.0f)
+        return 0.0f;
+
+    /* cosθ= (V1・V2) / (|V1||V2|) */
+    float dot  = vec3_dot (v0, v1);
+    float cosT = dot / (len0 * len1);
+
+#define FLT_EPSILON  1.192092896e-07F /* smallest such that 1.0+FLT_EPSILON != 1.0 */
+
+    /* round to (-1 < cosT < 1) */
+    if (cosT >  (1.0f - FLT_EPSILON)) return 0.0f;
+    if (cosT < -(1.0f - FLT_EPSILON)) return 2 * M_PI;
+
+    return (float)acos(cosT);
+}
+
+int
+ray_intersect (float *r0, float *r1,            /* [in ] Ray vector         */
+               float *t0, float *t1, float *t2, /* [in ] Triangle vertex    */
+               float *pout)                     /* [out] Intersection point */
+{
+    float nrm[3];
+    vec3_get_triangle_normal (nrm, t0, t1, t2);
+
+    float dot = - vec3_dot (nrm, t0);
+
+    {
+        /* plane equation */
+        float sig1 = (nrm[0] * r0[0]) + (nrm[1] * r0[1]) + (nrm[2] * r0[2]) + dot;
+        float sig2 = (nrm[0] * r1[0]) + (nrm[1] * r1[1]) + (nrm[2] * r1[2]) + dot;
+
+        /* if both signs are the same, ray segment is on the same side of the triangle. */
+        if (sig1 * sig2 > 0.0f)
+        {
+            return 0;
+        }
+    }
+
+    /* Ray directional vector */
+    float len;
+    float rd[3];
+    vec3_sub (rd, r1, r0);
+    vec3_normalize (rd);
+
+    {
+        float numer = (nrm[0] * r0[0]) + (nrm[1] * r0[1]) + (nrm[2] * r0[2]) + dot;
+        float denom = (nrm[0] * rd[0]) + (nrm[1] * rd[1]) + (nrm[2] * rd[2]);
+
+        /* if denom is 0, the ray segment is parallel to the triangle */
+        if (fabs (denom) < 0.0001f)
+            return 0;
+
+        /* Length to the Intersection Point */
+        len = - numer / denom;
+    }
+
+    /* (Intersection Point) =  P0 + (Length * direction) */
+    pout[0] = r0[0] + len * rd[0];
+    pout[1] = r0[1] + len * rd[1];
+    pout[2] = r0[2] + len * rd[2];
+
+    /* check if the intersection is inside the triangle */
+    {
+        /* vector: (intersection point)->(triangle vertex) */
+        float vecp[3][3];
+        vec3_sub (vecp[0], t0, pout);   // P -> t0
+        vec3_sub (vecp[1], t1, pout);   // P -> t1
+        vec3_sub (vecp[2], t2, pout);   // P -> t2
+
+        float angle = vec3_get_angle_of_vectors (vecp[0], vecp[1]) +
+                      vec3_get_angle_of_vectors (vecp[1], vecp[2]) +
+                      vec3_get_angle_of_vectors (vecp[2], vecp[0]);
+
+        /* If the Itersection point is in the triangle.
+         * the sum of the three angles should be 2PI [rad], */
+        if (fabs (angle - 2.0f * M_PI) > DEG_TO_RAD(2.0f))
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+void
+ray_proj_perspective (float *ray,                           /* [out] ray vector */
+                      float fovy, float aspect, float zfar, /* [in ] */
+                      int vp_w, int vp_h,                   /* [in ] viewport */
+                      int px,   int py)                     /* [in ] pointer  */
+{
+    float yfar   = zfar * tan (DEG_TO_RAD(fovy/2.0f)) * 2.0f;
+    float xfar   = yfar * aspect;
+    float yscale = yfar / (float)vp_h;
+    float xscale = xfar / (float)vp_w;
+
+    float x =   px - vp_w / 2.0f;
+    float y = - py + vp_h / 2.0f;
+    float z = -zfar;
+
+    x *= xscale;
+    y *= yscale;
+
+    ray[0] = x;
+    ray[1] = y;
+    ray[2] = z;
+}
+
+
 static void
 turn_x (float *m, float cosA, float sinA)
 {
@@ -961,6 +1115,39 @@ matrix_multvec2 (float *m, float *svec, float *dvec)
     _d1 += m01 * v0;
     dvec[0] = _d0;
     dvec[1] = _d1;
+}
+
+void
+matrix_multvec3 (float *m, float *svec, float *dvec)
+{
+    float v0 = svec[0];
+    float v1 = svec[1];
+    float v2 = svec[2];
+    float m00, m01, m02;
+    float m04, m05, m06;
+    float m08, m09, m10;
+    float m12, m13, m14;
+    float _d0, _d1, _d2;
+
+    m00 = m[ 0]; m04 = m[ 4]; m08 = m[ 8]; m12 = m[12];
+    m01 = m[ 1]; m05 = m[ 5]; m09 = m[ 9]; m13 = m[13];
+    m02 = m[ 2]; m06 = m[ 6]; m10 = m[10]; m14 = m[14];
+
+    _d0 = m12;
+    _d1 = m13;
+    _d2 = m14;
+    _d0 += m08 * v2;
+    _d1 += m09 * v2;
+    _d2 += m10 * v2;
+    _d0 += m04 * v1;
+    _d1 += m05 * v1;
+    _d2 += m06 * v1;
+    _d0 += m00 * v0;
+    _d1 += m01 * v0;
+    _d2 += m02 * v0;
+    dvec[0] = _d0;
+    dvec[1] = _d1;
+    dvec[2] = _d2;
 }
 
 void
