@@ -132,8 +132,10 @@ render_gui (scene_data_t *scn_data)
 
         for (uint32_t i = 0; i < 2; i ++)
         {
+            char strbuf[64];
+            sprintf (strbuf, "View%d", i);
             ImGui::SetNextTreeNodeOpen(true, ImGuiCond_Once);
-            if (ImGui::TreeNode("View")) 
+            if (ImGui::TreeNode(strbuf))
             {
                 const XrVector3f    &pos = scn_data->views[i].pose.position;
                 const XrQuaternionf &rot = scn_data->views[i].pose.orientation;
@@ -165,7 +167,7 @@ render_gui (scene_data_t *scn_data)
         ImGui::SliderFloat("squeeze", &input->squeezeVal[0],  0.0f, 1.0f);
         ImGui::SliderFloat("trigger", &input->triggerVal[0],  0.0f, 1.0f);
         ImGui::SliderFloat("stick_x", &input->stickVal[0].x, -1.0f, 1.0f);
-        ImGui::SliderFloat("stick_x", &input->stickVal[0].y, -1.0f, 1.0f);
+        ImGui::SliderFloat("stick_y", &input->stickVal[0].y, -1.0f, 1.0f);
 
         s_win_pos [s_win_num] = ImGui::GetWindowPos  ();
         s_win_size[s_win_num] = ImGui::GetWindowSize ();
@@ -186,7 +188,7 @@ render_gui (scene_data_t *scn_data)
         ImGui::SliderFloat("squeeze", &input->squeezeVal[1],  0.0f, 1.0f);
         ImGui::SliderFloat("trigger", &input->triggerVal[1],  0.0f, 1.0f);
         ImGui::SliderFloat("stick_x", &input->stickVal[1].x, -1.0f, 1.0f);
-        ImGui::SliderFloat("stick_x", &input->stickVal[1].y, -1.0f, 1.0f);
+        ImGui::SliderFloat("stick_y", &input->stickVal[1].y, -1.0f, 1.0f);
 
         s_win_pos [s_win_num] = ImGui::GetWindowPos  ();
         s_win_size[s_win_num] = ImGui::GetWindowSize ();
