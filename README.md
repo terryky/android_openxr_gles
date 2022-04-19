@@ -24,6 +24,10 @@ VR sample applications on Android NDK using OpenXR + OpenGLES. (especially  for 
 - draw UI Layer using ImGui.<br>
 [<img src="gl2imguiOXR/gl2imguiOXR.png" width=600>](https://github.com/terryky/android_openxr_gles/tree/master/gl2imguiOXR)
 
+### [gl2hittestOXR](https://github.com/terryky/android_openxr_gles/tree/master/gl2hittestOXR)
+- invoke the hand controller ray intersection test and draw a free curve.<br>
+[<img src="gl2hittestOXR/gl2hittestOXR.png" width=600>](https://github.com/terryky/android_openxr_gles/tree/master/gl2hittestOXR)
+
 
 ## 2. How to Build & Run
 
