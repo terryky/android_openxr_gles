@@ -51,12 +51,38 @@ oxr_initialize_loader (void *appVM, void *appCtx)
 /* ---------------------------------------------------------------------------- *
  *  Create OpenXR Instance with Android/OpenGLES binding
  * ---------------------------------------------------------------------------- */
+void
+oxr_enumerate_instance_ext ()
+{
+    uint32_t ext_count = 0;
+    OXR_CHECK (xrEnumerateInstanceExtensionProperties (NULL, 0, &ext_count, NULL));
+
+    XrExtensionProperties extProps[ext_count];
+    for (uint32_t i = 0; i < ext_count; i++)
+    {
+        extProps[i].type = XR_TYPE_EXTENSION_PROPERTIES;
+        extProps[i].next = NULL;
+    }
+
+    OXR_CHECK (xrEnumerateInstanceExtensionProperties (NULL, ext_count, &ext_count, extProps));
+
+    for (uint32_t i = 0; i < ext_count; i++)
+    {
+        LOGI ("InstanceExt[%2d/%2d]: %s\n", i, ext_count, extProps[i].extensionName);
+    }
+}
+
 XrInstance
 oxr_create_instance (void *appVM, void *appCtx)
 {
-    const char *ext_platform = "XR_KHR_android_create_instance";
-    const char *ext_graphics = "XR_KHR_opengl_es_enable";
-    const char *extensions[2] = {ext_platform, ext_graphics};
+    oxr_enumerate_instance_ext ();
+
+    std::vector<const char*> extensions;
+    extensions.push_back ("XR_KHR_android_create_instance");
+    extensions.push_back ("XR_KHR_opengl_es_enable");
+#if defined (USE_OXR_HANDTRACK)
+    extensions.push_back (XR_EXT_HAND_TRACKING_EXTENSION_NAME);
+#endif
 
     XrInstanceCreateInfoAndroidKHR ciAndroid = {XR_TYPE_INSTANCE_CREATE_INFO_ANDROID_KHR};
     ciAndroid.applicationVM       = appVM;
@@ -64,13 +90,13 @@ oxr_create_instance (void *appVM, void *appCtx)
 
     XrInstanceCreateInfo ci = {XR_TYPE_INSTANCE_CREATE_INFO};
     ci.next                       = &ciAndroid;
-    ci.enabledExtensionCount      = 2;
-    ci.enabledExtensionNames      = extensions;
+    ci.enabledExtensionCount      = extensions.size();
+    ci.enabledExtensionNames      = extensions.data();
     ci.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
     strncpy (ci.applicationInfo.applicationName, "OXR_GLES_APP", XR_MAX_ENGINE_NAME_SIZE-1);
 
     XrInstance instance;
-    xrCreateInstance (&ci, &instance);
+    OXR_CHECK (xrCreateInstance (&ci, &instance));
     s_instance = instance;
 
     /* query instance name, version */
@@ -115,6 +141,10 @@ oxr_get_system (XrInstance instance)
 
     /* query system properties*/
     XrSystemProperties prop = {XR_TYPE_SYSTEM_PROPERTIES};
+#if defined (USE_OXR_HANDTRACK)
+    XrSystemHandTrackingPropertiesEXT handTrackProp {XR_TYPE_SYSTEM_HAND_TRACKING_PROPERTIES_EXT};
+    prop.next = &handTrackProp;
+#endif
     xrGetSystemProperties (instance, sysid, &prop);
 
     LOGI ("-----------------------------------------------------------------");
@@ -126,6 +156,9 @@ oxr_get_system (XrInstance instance)
     LOGI ("System Tracking Properties: Orientation=%d, Position=%d",
             prop.trackingProperties.orientationTracking,
             prop.trackingProperties.positionTracking);
+#if defined (USE_OXR_HANDTRACK)
+    LOGI ("System HandTracking Props : %d", handTrackProp.supportsHandTracking);
+#endif
     LOGI ("-----------------------------------------------------------------");
 
     return sysid;
@@ -776,6 +809,114 @@ oxr_poll_events (XrInstance instance, XrSession session, bool *exit_loop, bool *
     return 0;
 }
 
+
+
+/* ---------------------------------------------------------------------------- *
+ *  Hand Trackers
+ * ---------------------------------------------------------------------------- */
+#if defined (USE_OXR_HANDTRACK)
+int
+oxr_create_handtrackers (XrInstance instance, XrSession session, XrHandTrackerEXT &handTrackerR)
+{
+    PFN_xrCreateHandTrackerEXT xrCreateHandTrackerEXT;
+    xrGetInstanceProcAddr (instance, "xrCreateHandTrackerEXT",
+                           (PFN_xrVoidFunction *)&xrCreateHandTrackerEXT);
+
+    XrHandTrackerCreateInfoEXT ci = {XR_TYPE_HAND_TRACKER_CREATE_INFO_EXT};
+    ci.handJointSet = XR_HAND_JOINT_SET_DEFAULT_EXT;
+    ci.hand         = XR_HAND_LEFT_EXT;
+
+    OXR_CHECK (xrCreateHandTrackerEXT (session, &ci, &handTrackerR));
+
+    ci.hand         = XR_HAND_RIGHT_EXT;
+    OXR_CHECK (xrCreateHandTrackerEXT (session, &ci, &handTrackerR));
+
+    return 0;
+}
+
+
+XrHandJointLocationsEXT *
+oxr_create_handjoint_loc ()
+{
+    XrHandTrackingScaleFB           *scale     = new XrHandTrackingScaleFB {};
+    XrHandTrackingCapsulesStateFB   *capsule   = new XrHandTrackingCapsulesStateFB {};
+    XrHandTrackingAimStateFB        *aim       = new XrHandTrackingAimStateFB {};
+    XrHandJointVelocitiesEXT        *velo      = new XrHandJointVelocitiesEXT {};
+    XrHandJointVelocityEXT          *velo_array= new XrHandJointVelocityEXT[XR_HAND_JOINT_COUNT_EXT] {};
+    XrHandJointLocationsEXT         *loc       = new XrHandJointLocationsEXT {};
+    XrHandJointLocationEXT          *loc_array = new XrHandJointLocationEXT[XR_HAND_JOINT_COUNT_EXT] {};
+
+
+    scale->type                  = XR_TYPE_HAND_TRACKING_SCALE_FB;
+    scale->next                  = nullptr;
+    scale->sensorOutput          = 1.0f;
+    scale->currentOutput         = 1.0f;
+    scale->overrideValueInput    = 1.0f;
+    scale->overrideHandScale     = XR_FALSE;
+
+    capsule->type                = XR_TYPE_HAND_TRACKING_CAPSULES_STATE_FB;
+    capsule->next                = scale;
+
+    aim->type                    = XR_TYPE_HAND_TRACKING_AIM_STATE_FB;
+    aim->next                    = &capsule;
+
+    velo->type                   = XR_TYPE_HAND_JOINT_VELOCITIES_EXT;
+    velo->next                   = &aim;
+    velo->jointCount             = XR_HAND_JOINT_COUNT_EXT;
+    velo->jointVelocities        = velo_array;
+
+    loc->type                    = XR_TYPE_HAND_JOINT_LOCATIONS_EXT;
+//    loc->next                    = velo;
+    loc->jointCount              = XR_HAND_JOINT_COUNT_EXT;
+    loc->jointLocations          = loc_array;
+
+    return loc;
+}
+
+
+int
+oxr_locate_handjoints (XrInstance instance, XrHandTrackerEXT handTracker,
+                       XrSpace bspace, XrTime time,
+                       XrHandJointLocationsEXT *loc)
+{
+    PFN_xrLocateHandJointsEXT xrLocateHandJointsEXT;
+    xrGetInstanceProcAddr (instance, "xrLocateHandJointsEXT",
+                           (PFN_xrVoidFunction *)&xrLocateHandJointsEXT);
+
+    XrHandJointsLocateInfoEXT info = {XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT};
+    info.baseSpace = bspace;
+    info.time      = time;
+
+    OXR_CHECK (xrLocateHandJointsEXT (handTracker, &info, loc));
+
+    if (loc->isActive)
+    {
+        LOGI ("Active\n");
+        XrHandJointLocationEXT *loc_array = loc->jointLocations;
+        XrSpaceLocationFlags isValid =
+                XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_VALID_BIT;
+
+        for (int i = 0; i < XR_HAND_JOINT_COUNT_EXT; i++)
+        {
+            if ((loc_array[i].locationFlags & isValid))
+            {
+                const XrPosef pose = loc_array[i].pose;
+                const float   rad  = loc_array[i].radius;
+                LOGI ("Joint[%d/%d]: POS(%f, %f, %f), RAD(%f)\n",
+                    i, XR_HAND_JOINT_COUNT_EXT,
+                    pose.position.x, pose.position.y, pose.position.z,
+                    rad);
+            }
+        }
+    }
+    else
+    {
+        LOGI ("inActive\n");
+    }
+    return 0;
+}
+
+#endif
 
 
 /* ---------------------------------------------------------------------------- *

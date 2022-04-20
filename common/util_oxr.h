@@ -104,6 +104,14 @@ bool        oxr_is_session_running ();
 int         oxr_poll_events (XrInstance instance, XrSession session, bool *exit_loop, bool *req_restart);
 
 
+#if defined (USE_OXR_HANDTRACK)
+int         oxr_create_handtrackers (XrInstance instance, XrSession session, XrHandTrackerEXT &handTrackerR);
+XrHandJointLocationsEXT *
+            oxr_create_handjoint_loc ();
+int         oxr_locate_handjoints (XrInstance instance, XrHandTrackerEXT handTracker,
+                                   XrSpace bspace, XrTime time, XrHandJointLocationsEXT *loc);
+#endif
+
 /* Error handling */
 void        oxr_check_errors (XrResult ret, const char *func, const char *fname, int line);
 
