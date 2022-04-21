@@ -82,6 +82,9 @@ oxr_create_instance (void *appVM, void *appCtx)
     extensions.push_back ("XR_KHR_opengl_es_enable");
 #if defined (USE_OXR_HANDTRACK)
     extensions.push_back (XR_EXT_HAND_TRACKING_EXTENSION_NAME);
+    extensions.push_back (XR_FB_HAND_TRACKING_MESH_EXTENSION_NAME);
+    extensions.push_back (XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME);
+    extensions.push_back (XR_FB_HAND_TRACKING_CAPSULES_EXTENSION_NAME);
 #endif
 
     XrInstanceCreateInfoAndroidKHR ciAndroid = {XR_TYPE_INSTANCE_CREATE_INFO_ANDROID_KHR};
@@ -838,37 +841,36 @@ oxr_create_handtrackers (XrInstance instance, XrSession session, XrHandTrackerEX
 XrHandJointLocationsEXT *
 oxr_create_handjoint_loc ()
 {
-    XrHandTrackingScaleFB           *scale     = new XrHandTrackingScaleFB {};
-    XrHandTrackingCapsulesStateFB   *capsule   = new XrHandTrackingCapsulesStateFB {};
-    XrHandTrackingAimStateFB        *aim       = new XrHandTrackingAimStateFB {};
-    XrHandJointVelocitiesEXT        *velo      = new XrHandJointVelocitiesEXT {};
-    XrHandJointVelocityEXT          *velo_array= new XrHandJointVelocityEXT[XR_HAND_JOINT_COUNT_EXT] {};
-    XrHandJointLocationsEXT         *loc       = new XrHandJointLocationsEXT {};
-    XrHandJointLocationEXT          *loc_array = new XrHandJointLocationEXT[XR_HAND_JOINT_COUNT_EXT] {};
+    XrHandTrackingScaleFB         *scale    = new XrHandTrackingScaleFB {};
+    XrHandTrackingCapsulesStateFB *capsule  = new XrHandTrackingCapsulesStateFB {};
+    XrHandTrackingAimStateFB      *aim      = new XrHandTrackingAimStateFB {};
+    XrHandJointVelocitiesEXT      *vel      = new XrHandJointVelocitiesEXT {};
+    XrHandJointVelocityEXT        *vel_data = new XrHandJointVelocityEXT[XR_HAND_JOINT_COUNT_EXT] {};
+    XrHandJointLocationsEXT       *loc      = new XrHandJointLocationsEXT {};
+    XrHandJointLocationEXT        *loc_data = new XrHandJointLocationEXT[XR_HAND_JOINT_COUNT_EXT] {};
 
+    scale->type               = XR_TYPE_HAND_TRACKING_SCALE_FB;
+    scale->next               = nullptr;
+    scale->sensorOutput       = 1.0f;
+    scale->currentOutput      = 1.0f;
+    scale->overrideValueInput = 1.0f;
+    scale->overrideHandScale  = XR_FALSE;
 
-    scale->type                  = XR_TYPE_HAND_TRACKING_SCALE_FB;
-    scale->next                  = nullptr;
-    scale->sensorOutput          = 1.0f;
-    scale->currentOutput         = 1.0f;
-    scale->overrideValueInput    = 1.0f;
-    scale->overrideHandScale     = XR_FALSE;
+    capsule->type             = XR_TYPE_HAND_TRACKING_CAPSULES_STATE_FB;
+    capsule->next             = scale;
 
-    capsule->type                = XR_TYPE_HAND_TRACKING_CAPSULES_STATE_FB;
-    capsule->next                = scale;
+    aim->type                 = XR_TYPE_HAND_TRACKING_AIM_STATE_FB;
+    aim->next                 = capsule;
 
-    aim->type                    = XR_TYPE_HAND_TRACKING_AIM_STATE_FB;
-    aim->next                    = &capsule;
+    vel->type                 = XR_TYPE_HAND_JOINT_VELOCITIES_EXT;
+    vel->next                 = aim;
+    vel->jointCount           = XR_HAND_JOINT_COUNT_EXT;
+    vel->jointVelocities      = vel_data;
 
-    velo->type                   = XR_TYPE_HAND_JOINT_VELOCITIES_EXT;
-    velo->next                   = &aim;
-    velo->jointCount             = XR_HAND_JOINT_COUNT_EXT;
-    velo->jointVelocities        = velo_array;
-
-    loc->type                    = XR_TYPE_HAND_JOINT_LOCATIONS_EXT;
-//    loc->next                    = velo;
-    loc->jointCount              = XR_HAND_JOINT_COUNT_EXT;
-    loc->jointLocations          = loc_array;
+    loc->type                 = XR_TYPE_HAND_JOINT_LOCATIONS_EXT;
+    loc->next                 = vel;
+    loc->jointCount           = XR_HAND_JOINT_COUNT_EXT;
+    loc->jointLocations       = loc_data;
 
     return loc;
 }
