@@ -20,6 +20,7 @@
 #include <openxr/openxr_platform.h>
 #include <openxr/openxr_reflection.h>
 #include <vector>
+#include <array>
 
 #include "util_log.h"
 #include "util_render_target.h"
@@ -105,7 +106,8 @@ int         oxr_poll_events (XrInstance instance, XrSession session, bool *exit_
 
 
 #if defined (USE_OXR_HANDTRACK)
-int         oxr_create_handtrackers (XrInstance instance, XrSession session, XrHandTrackerEXT &handTrackerR);
+int         oxr_create_handtrackers (XrInstance instance, XrSession session,
+                                     std::array<XrHandTrackerEXT, 2> &handTracker);
 XrHandJointLocationsEXT *
             oxr_create_handjoint_loc ();
 int         oxr_locate_handjoints (XrInstance instance, XrHandTrackerEXT handTracker,

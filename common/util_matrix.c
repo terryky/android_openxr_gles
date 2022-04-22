@@ -112,8 +112,6 @@ vec3_get_angle_of_vectors (float *v0, float *v1)
     float dot  = vec3_dot (v0, v1);
     float cosT = dot / (len0 * len1);
 
-#define FLT_EPSILON  1.192092896e-07F /* smallest such that 1.0+FLT_EPSILON != 1.0 */
-
     /* round to (-1 < cosT < 1) */
     if (cosT >  (1.0f - FLT_EPSILON)) return 0.0f;
     if (cosT < -(1.0f - FLT_EPSILON)) return 2 * M_PI;

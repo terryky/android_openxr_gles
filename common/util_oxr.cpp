@@ -819,7 +819,8 @@ oxr_poll_events (XrInstance instance, XrSession session, bool *exit_loop, bool *
  * ---------------------------------------------------------------------------- */
 #if defined (USE_OXR_HANDTRACK)
 int
-oxr_create_handtrackers (XrInstance instance, XrSession session, XrHandTrackerEXT &handTrackerR)
+oxr_create_handtrackers (XrInstance instance, XrSession session,
+                         std::array<XrHandTrackerEXT, 2> &handTracker)
 {
     PFN_xrCreateHandTrackerEXT xrCreateHandTrackerEXT;
     xrGetInstanceProcAddr (instance, "xrCreateHandTrackerEXT",
@@ -827,12 +828,12 @@ oxr_create_handtrackers (XrInstance instance, XrSession session, XrHandTrackerEX
 
     XrHandTrackerCreateInfoEXT ci = {XR_TYPE_HAND_TRACKER_CREATE_INFO_EXT};
     ci.handJointSet = XR_HAND_JOINT_SET_DEFAULT_EXT;
-    ci.hand         = XR_HAND_LEFT_EXT;
 
-    OXR_CHECK (xrCreateHandTrackerEXT (session, &ci, &handTrackerR));
+    ci.hand = XR_HAND_LEFT_EXT;
+    OXR_CHECK (xrCreateHandTrackerEXT (session, &ci, &handTracker[0]));
 
-    ci.hand         = XR_HAND_RIGHT_EXT;
-    OXR_CHECK (xrCreateHandTrackerEXT (session, &ci, &handTrackerR));
+    ci.hand = XR_HAND_RIGHT_EXT;
+    OXR_CHECK (xrCreateHandTrackerEXT (session, &ci, &handTracker[1]));
 
     return 0;
 }
