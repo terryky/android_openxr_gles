@@ -86,6 +86,9 @@ oxr_create_instance (void *appVM, void *appCtx)
     extensions.push_back (XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME);
     extensions.push_back (XR_FB_HAND_TRACKING_CAPSULES_EXTENSION_NAME);
 #endif
+#if defined (USE_OXR_PASSTHROUGH)
+    extensions.push_back (XR_FB_PASSTHROUGH_EXTENSION_NAME);
+#endif
 
     XrInstanceCreateInfoAndroidKHR ciAndroid = {XR_TYPE_INSTANCE_CREATE_INFO_ANDROID_KHR};
     ciAndroid.applicationVM       = appVM;
@@ -919,6 +922,77 @@ oxr_locate_handjoints (XrInstance instance, XrHandTrackerEXT handTracker,
     return 0;
 }
 
+#endif
+
+
+
+/* ---------------------------------------------------------------------------- *
+ *  PassThrough
+ * ---------------------------------------------------------------------------- */
+#if defined (USE_OXR_PASSTHROUGH)
+int
+oxr_create_passthrough_layer (XrInstance instance, XrSession session,
+                              XrPassthroughFB &passthrough,
+                              XrPassthroughLayerFB &ptLayer)
+{
+    PFN_xrCreatePassthroughFB xrCreatePassthroughFB;
+    xrGetInstanceProcAddr (instance, "xrCreatePassthroughFB",
+                           (PFN_xrVoidFunction *)&xrCreatePassthroughFB);
+
+    PFN_xrCreatePassthroughLayerFB xrCreatePassthroughLayerFB;
+    xrGetInstanceProcAddr (instance, "xrCreatePassthroughLayerFB",
+                           (PFN_xrVoidFunction *)&xrCreatePassthroughLayerFB);
+
+    {
+        XrPassthroughCreateInfoFB ci = {XR_TYPE_PASSTHROUGH_CREATE_INFO_FB};
+        OXR_CHECK (xrCreatePassthroughFB (session, &ci, &passthrough));
+    }
+
+    {
+        XrPassthroughLayerCreateInfoFB ci = {XR_TYPE_PASSTHROUGH_LAYER_CREATE_INFO_FB};
+        ci.passthrough = passthrough;
+        ci.purpose     = XR_PASSTHROUGH_LAYER_PURPOSE_RECONSTRUCTION_FB;
+        OXR_CHECK (xrCreatePassthroughLayerFB (session, &ci, &ptLayer));
+    }
+
+    return 0;
+}
+
+
+int
+oxr_start_passthrough (XrInstance instance, XrPassthroughFB passthrough)
+{
+    PFN_xrPassthroughStartFB xrPassthroughStartFB;
+    xrGetInstanceProcAddr (instance, "xrPassthroughStartFB",
+                           (PFN_xrVoidFunction *)&xrPassthroughStartFB);
+
+    OXR_CHECK (xrPassthroughStartFB (passthrough));
+
+    return 0;
+}
+
+
+int
+oxr_resume_passthrough_layer (XrInstance instance,
+                              XrPassthroughLayerFB ptLayer)
+{
+    PFN_xrPassthroughLayerResumeFB xrPassthroughLayerResumeFB;
+    xrGetInstanceProcAddr (instance, "xrPassthroughLayerResumeFB",
+                           (PFN_xrVoidFunction *)&xrPassthroughLayerResumeFB);
+
+    PFN_xrPassthroughLayerSetStyleFB xrPassthroughLayerSetStyleFB;
+    xrGetInstanceProcAddr (instance, "xrPassthroughLayerSetStyleFB",
+                           (PFN_xrVoidFunction *)&xrPassthroughLayerSetStyleFB);
+
+    OXR_CHECK (xrPassthroughLayerResumeFB (ptLayer));
+
+    XrPassthroughStyleFB style = {XR_TYPE_PASSTHROUGH_STYLE_FB};
+    style.textureOpacityFactor = 0.5f;
+    style.edgeColor            = {0.0f, 0.0f, 0.0f, 0.0f};
+    OXR_CHECK (xrPassthroughLayerSetStyleFB (ptLayer, &style));
+
+    return 0;
+}
 #endif
 
 

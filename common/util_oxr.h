@@ -114,6 +114,16 @@ int         oxr_locate_handjoints (XrInstance instance, XrHandTrackerEXT handTra
                                    XrSpace bspace, XrTime time, XrHandJointLocationsEXT *loc);
 #endif
 
+
+#if defined (USE_OXR_PASSTHROUGH)
+int         oxr_create_passthrough_layer (XrInstance instance, XrSession session,
+                                          XrPassthroughFB &passthrough,
+                                          XrPassthroughLayerFB &ptlayer);
+int         oxr_start_passthrough (XrInstance instance, XrPassthroughFB passthrough);
+int         oxr_resume_passthrough_layer (XrInstance instance, XrPassthroughLayerFB ptLayer);
+#endif
+
+
 /* Error handling */
 void        oxr_check_errors (XrResult ret, const char *func, const char *fname, int line);
 
