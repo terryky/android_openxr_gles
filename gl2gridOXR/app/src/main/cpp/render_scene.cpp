@@ -4,7 +4,6 @@
 #include "util_render2d.h"
 #include "util_debugstr.h"
 
-static GLuint           s_fbo_swapchain;
 
 
 static void
@@ -145,10 +144,9 @@ init_gles_scene ()
     init_dbgstr (0, 0);
     init_2d_renderer (0, 0);
 
-    glGenFramebuffers (1, &s_fbo_swapchain);
-
     return 0;
 }
+
 
 int
 render_gles_scene (render_target_t &rtarget, XrRect2Di imgRect)
