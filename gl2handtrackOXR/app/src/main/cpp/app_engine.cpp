@@ -305,7 +305,7 @@ AppEngine::RenderLayer(XrTime dpy_time,
     /* Acquire View Location */
     uint32_t viewCount = (uint32_t)m_viewSurface.size();
 
-    std::vector<XrView> views(viewCount);
+    std::vector<XrView> views(viewCount, {XR_TYPE_VIEW});
     oxr_locate_views (m_session, dpy_time, m_appSpace, &viewCount, views.data());
 
     layerViews.resize (viewCount);
